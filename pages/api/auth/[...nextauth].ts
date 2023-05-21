@@ -62,9 +62,15 @@ const jwtCallback: CallbacksOptions["jwt"] = async ({
   // Access token has expired, refresh it
   console.log("ACCESS TOKEN EXPIRED, REFRESHING....");
   return await refreshAccessToken(token as ExtendedToken);
+};
 
-  console.log("THIS IS TOKEN", token);
-  return token;
+const sessionCallback: CallbacksOptions["session"] = async ({
+  session,
+  token,
+}) => {
+  session.accessToken = (token as ExtendedToken).accessToken;
+  session.error = (token as ExtendedToken).error;
+  return session;
 };
 
 export default NextAuth({
@@ -87,5 +93,6 @@ export default NextAuth({
   // callback is called when user sign-in success
   callbacks: {
     jwt: jwtCallback,
+    session: sessionCallback,
   },
 });

@@ -1,4 +1,4 @@
-import { User } from "next-auth";
+import { DefaultSession, Session, User } from "next-auth";
 import { JWT } from "next-auth/jwt";
 
 export enum TokenError {
@@ -12,3 +12,8 @@ export interface ExtendedToken extends JWT {
   user: User;
   error?: TokenError;
 }
+
+export interface ExtendedSession extends DefaultSession {
+  accessToken: ExtendedToken["accessToken"];
+  error: ExtendedToken["error"];
+};
