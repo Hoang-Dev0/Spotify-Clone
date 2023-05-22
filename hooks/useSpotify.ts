@@ -3,7 +3,7 @@ import { ExtendedSession, TokenError } from "@/types";
 import { signIn, useSession } from "next-auth/react";
 import { useEffect } from "react";
 
-const useSpotify = () => {
+export const useSpotify = () => {
   const { data: session } = useSession();
 
   useEffect(() => {
