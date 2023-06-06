@@ -1,4 +1,3 @@
-import { spotifyApi } from "@/config/spotify";
 import { useSpotify } from "@/hooks/useSpotify";
 import { IPlaylistContext, PlaylistContextState } from "@/types";
 import { useSession } from "next-auth/react";
