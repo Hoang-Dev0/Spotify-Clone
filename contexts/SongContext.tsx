@@ -1,7 +1,8 @@
 import { useSpotify } from "@/hooks/useSpotify";
-import { ISongContext, SongContextState } from "@/types";
+import { songReducer } from "@/reducers/songReducer";
+import { ISongContext, SongContextState, SongReducerActionType } from "@/types";
 import { useSession } from "next-auth/react";
-import { createContext, useContext, useReducer } from "react";
+import { createContext, useContext, useEffect, useReducer } from "react";
 
 interface SongContextProvider {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ const defaultSongContextState: SongContextState = {
 
 export const SongContext = createContext<ISongContext>({
   songContextState: defaultSongContextState,
+  dispatchSongAction: () => {},
 });
 
 export const useSongContext = () => useContext(SongContext);
@@ -24,11 +26,61 @@ export const useSongContext = () => useContext(SongContext);
 const SongContextProvider = ({ children }: SongContextProvider) => {
   const spotifyApi = useSpotify();
   const { data: session } = useSession();
-  const [songContextState, dispatchSongAction] = useReducer(songReducer, defaultSongContextState)
+  const [songContextState, dispatchSongAction] = useReducer(
+    songReducer,
+    defaultSongContextState
+  );
 
   const songContextProviderData: ISongContext = {
-    songContextState: defaultSongContextState,
+    songContextState,
+    dispatchSongAction,
   };
+
+  useEffect(() => {
+    const setCurrentDevice = async () => {
+      const availableDevicesResponse = await spotifyApi.getMyDevices();
+
+      if (!availableDevicesResponse.body.devices.length) return;
+
+      const { id: deviceId, volume_percent } =
+        availableDevicesResponse.body.devices[0];
+
+      dispatchSongAction({
+        type: SongReducerActionType.SetDevice,
+        payload: {
+          deviceId,
+          volume: volume_percent as number,
+        },
+      });
+
+      await spotifyApi.transferMyPlayback([deviceId as string]);
+    };
+
+    if (spotifyApi.getAccessToken()) {
+      setCurrentDevice();
+    }
+  }, [spotifyApi, session]);
+
+  useEffect(() => {
+    const getCurrentPlayingSong = async () => {
+      const songInfo = await spotifyApi.getMyCurrentPlayingTrack();
+      if (!songInfo.body) return;
+      console.log("Song info", songInfo.body);
+
+      dispatchSongAction({
+        type: SongReducerActionType.SetCurrentPlayingSong,
+        payload: {
+          selectedSongId: songInfo.body.item?.id,
+          selectedSong: songInfo.body.item as SpotifyApi.TrackObjectFull,
+          isPlaying: songInfo.body.is_playing,
+        },
+      });
+    };
+
+    if (spotifyApi.getAccessToken()) {
+      getCurrentPlayingSong();
+    }
+  }, [spotifyApi, session]);
 
   return (
     <SongContext.Provider value={songContextProviderData}>

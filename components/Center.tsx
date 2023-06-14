@@ -23,8 +23,6 @@ const Center = () => {
   } = usePlaylistContext();
 
   const [fromColors, setFromColors] = useState<string | null>(null);
-  console.log("selectedPlaylist", selectedPlaylist);
-
   useEffect(() => {
     setFromColors(pickRandom(colors));
   }, [selectedPlaylistId]);
